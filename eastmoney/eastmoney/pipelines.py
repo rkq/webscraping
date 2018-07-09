@@ -18,7 +18,7 @@ class NoticePipeline(object):
         self.connection = sqlite3.connect(self.db_name)
         self.connection.execute('''CREATE TABLE IF NOT EXISTS notice (id INTEGER PRIMARY KEY AUTOINCREMENT,
         security_code TEXT NOT NULL, security_name TEXT NOT NULL, notice_title TEXT NOT NULL,
-        notice_url TEXT NOT NULL, notice_date REAL NOT NULL)''')
+        notice_url TEXT NOT NULL, notice_date DATE NOT NULL)''')
         self.connection.commit()
 
     def close_spider(self, spider):
