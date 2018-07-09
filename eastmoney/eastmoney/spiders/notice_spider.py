@@ -17,12 +17,9 @@ class NoticeSpider(scrapy.Spider):
         self.param_rt = 51033850
 
     def start_requests(self):
-        urls = [
-            NoticeSpider.url_pattern %
-            (self.param_page_index, self.param_page_size, self.param_jsobj, self.param_date, self.param_rt)
-        ]
-        for url in urls:
-            yield scrapy.Request(url=url, callback=self.parse, meta={'page_index': self.param_page_index})
+        url = NoticeSpider.url_pattern %\
+              (self.param_page_index, self.param_page_size, self.param_jsobj, self.param_date, self.param_rt)
+        yield scrapy.Request(url=url, callback=self.parse, meta={'page_index': self.param_page_index})
 
     def parse(self, response):
         self.logger.info('Parse function called on %s, status %d', response.url, response.status)
@@ -33,7 +30,7 @@ class NoticeSpider(scrapy.Spider):
             yield NoticeItem(security_code=item['CDSY_SECUCODES'][0]['SECURITYCODE'],
                              security_name=item['CDSY_SECUCODES'][0]['SECURITYFULLNAME'],
                              notice_title=item['NOTICETITLE'],
-                             notice_url=item['Url'], notice_date=item['NOTICEDATE'])
+                             notice_url=item['Url'], notice_date=item['NOTICEDATE'][:-6])
 
         if response.meta['page_index'] < data['pages']:
             url = NoticeSpider.url_pattern %\
