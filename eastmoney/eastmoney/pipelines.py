@@ -5,7 +5,6 @@
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
 # See: https://doc.scrapy.org/en/latest/topics/item-pipeline.html
 import sqlite3
-import datetime
 
 
 class NoticePipeline(object):
@@ -26,8 +25,8 @@ class NoticePipeline(object):
         self.connection.close()
 
     def process_item(self, item, spider):
-        notice_ts = datetime.datetime.strptime(item['notice_date'], '%Y-%m-%dT%H:%M:%S')
         self.connection.execute('''INSERT INTO notice(security_code, security_name, notice_title, notice_url,
         notice_date) VALUES(?, ?, ?, ?, ?)
-        ''', (item['security_code'], item['security_name'], item['notice_title'], item['notice_url'], notice_ts))
+        ''', (item['security_code'], item['security_name'], item['notice_title'], item['notice_url'],
+              item['notice_date']))
         return None
