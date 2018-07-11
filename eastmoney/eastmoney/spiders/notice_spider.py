@@ -19,6 +19,7 @@ class NoticeSpider(scrapy.Spider):
     day DATE NOT NULL,
     ts DATE NOT NULL)'''
     track_insert = 'INSERT INTO spider_track(url, status, day, ts) VALUES(?, ?, ?, ?)'
+    notice_delete = 'DELETE FROM notice WHERE notice_date = ?'
 
     def __init__(self, *args, **kwargs):
         super(NoticeSpider, self).__init__(*args, **kwargs)
@@ -27,31 +28,36 @@ class NoticeSpider(scrapy.Spider):
         self.param_jsobj = 'USeegQcM'
         self.param_rt = 51033850
         self.args = kwargs
-        self.hist_conn = sqlite3.connect('spider_hist.db')
-        self.hist_conn.execute(NoticeSpider.hist_create)
-        self.track_conn = sqlite3.connect('spider_track.db')
-        self.track_conn.execute(NoticeSpider.track_create)
+        self.db_name= 'notice.db'
+        self.db_conn = sqlite3.connect(self.db_name)
+        self.db_conn.execute(NoticeSpider.hist_create)
+        self.db_conn.execute(NoticeSpider.track_create)
+        self.db_conn.commit()
 
     def start_requests(self):
         if self.args.get('days') is not None:
             days = self.args['days'].split(',')
         else:
             total = [(datetime.date.today() - datetime.timedelta(i)).isoformat() for i in range(0, 31)]
-            cursor = self.hist_conn.execute(NoticeSpider.hist_select,
-                                            ((datetime.date.today() - datetime.timedelta(30)).isoformat(),))
+            cursor = self.db_conn.execute(NoticeSpider.hist_select,
+                                          ((datetime.date.today() - datetime.timedelta(30)).isoformat(),))
             done = [row[0] for row in cursor.fetchall()]
             cursor.close()
             days = [item for item in set(total).difference(set(done))]
         self.logger.info('The notice of %s will be crawled.' % (' '.join(days),))
         for day in days:
+            self.logger.info('Clear up notice on %s', day)
+            self.db_conn.execute(NoticeSpider.notice_delete, (day,))
+            self.db_conn.commit()
             url = NoticeSpider.url_pattern % \
                   (self.param_page_index, self.param_page_size, self.param_jsobj, day, self.param_rt)
             yield scrapy.Request(url=url, callback=self.parse, meta={'page_index': self.param_page_index, 'day': day})
 
     def parse(self, response):
         self.logger.info('Parse function called on %s, status %d', response.url, response.status)
-        self.track_conn.execute(NoticeSpider.track_insert,
-                                (response.url, response.status, response.meta['day'], datetime.datetime.now()))
+        self.db_conn.execute(NoticeSpider.track_insert,
+                             (response.url, response.status, response.meta['day'], datetime.datetime.now()))
+        self.db_conn.commit()
         start_index = response.text.index('{')
         end_index = response.text.rindex('}') + 1
         data = json.loads(response.text[start_index:end_index], encoding='GB2312')
@@ -68,10 +74,9 @@ class NoticeSpider(scrapy.Spider):
             yield scrapy.Request(url=url, callback=self.parse, meta={'page_index': response.meta['page_index']+1,
                                                                      'day': response.meta['day']})
         else:
-            self.hist_conn.execute(self.hist_insert, (response.meta['day'],))
+            self.db_conn.execute(self.hist_insert, (response.meta['day'],))
+            self.db_conn.commit()
 
     def closed(self, reason):
-        self.hist_conn.commit()
-        self.hist_conn.close()
-        self.track_conn.commit()
-        self.track_conn.close()
+        self.db_conn.commit()
+        self.db_conn.close()

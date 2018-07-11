@@ -8,7 +8,7 @@
 from scrapy import signals
 
 
-class EastmoneySpiderMiddleware(object):
+class NoticeSpiderMiddleware(object):
     # Not all methods need to be defined. If a method is not defined,
     # scrapy acts as if the spider middleware does not modify the
     # passed objects.
@@ -23,7 +23,7 @@ class EastmoneySpiderMiddleware(object):
     def process_spider_input(self, response, spider):
         # Called for each response that goes through the spider
         # middleware and into the spider.
-
+        spider.logger.info('URL %s, STATUS %d', response.url, response.status)
         # Should return None or raise an exception.
         return None
 
@@ -56,7 +56,7 @@ class EastmoneySpiderMiddleware(object):
         spider.logger.info('Spider opened: %s' % spider.name)
 
 
-class EastmoneyDownloaderMiddleware(object):
+class NoticeDownloaderMiddleware(object):
     # Not all methods need to be defined. If a method is not defined,
     # scrapy acts as if the downloader middleware does not modify the
     # passed objects.
