@@ -25,7 +25,7 @@ class NoticeSpider(scrapy.Spider):
         super(NoticeSpider, self).__init__(*args, **kwargs)
         self.param_page_index = 1
         self.param_page_size = 50
-        self.param_jsobj = 'USeegQcM'
+        self.param_jsobj = 'zCByVyzR'
         self.param_rt = 51033850
         self.args = kwargs
         self.db_name= 'notice.db'
